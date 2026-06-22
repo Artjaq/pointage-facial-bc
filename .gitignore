@@ -82,3 +82,5 @@ rad.json
 # File d'attente locale (pointages nominatifs — nLPD/RGPD)
 recognition-client/queue/*.json
 recognition-client/queue/sent/*.json
+./bc-extension/launch.json
+bc-extension/src/launch.json
