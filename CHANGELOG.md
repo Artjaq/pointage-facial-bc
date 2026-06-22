@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-06-22
+- docs: ajout analyse risques/TCO/ROI + 2 business cases et planification prévu/réalisé (fichiers : docs/analyse-risques-couts-business-cases.md, docs/planification-ecarts.md)
+
+## 2026-06-22
 - Intégration de l'extension AL (app.json + src/) dans bc-extension/ (fichiers : bc-extension/**).
 
 ## 2026-06-22
