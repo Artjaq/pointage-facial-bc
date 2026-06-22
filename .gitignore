@@ -1,0 +1,83 @@
+# =====================================================================
+#  pointage-facial-bc — .gitignore
+#  RÈGLE D'OR : aucune donnée biométrique ni aucun secret dans le repo.
+# =====================================================================
+
+# --- Données biométriques (NE JAMAIS COMMIT — nLPD/RGPD) --------------
+# Images de référence / captures
+recognition-client/known_faces/
+recognition-client/enrollment/
+recognition-client/dataset/
+recognition-client/faces/
+recognition-client/captures/
+**/known_faces/
+**/enrollment/
+**/captures/
+*.jpg
+*.jpeg
+*.png
+*.bmp
+# Encodages / modèles entraînés (vecteurs biométriques)
+*.pkl
+*.joblib
+*.npy
+*.npz
+*.dat
+encodings/
+**/encodings/
+
+# --- Secrets / config locale -----------------------------------------
+.env
+*.env
+.env.*
+config_local.py
+secrets.*
+*credentials*
+*.pem
+*.key
+
+# --- Tampon local / logs ---------------------------------------------
+buffer/
+**/buffer/
+logs/
+*.log
+
+# --- Python -----------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+.Python
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+
+# --- AL / Business Central -------------------------------------------
+# Symboles téléchargés (volumineux, régénérés depuis le serveur)
+.alpackages/
+**/.alpackages/
+.altestrunner/
+.snapshots/
+# Extension compilée
+*.app
+rad.json
+# launch.json contient le nom du serveur BC / bastion → exclu
+.vscode/launch.json
+
+# --- macOS / éditeurs -------------------------------------------------
+.DS_Store
+.idea/
+*.swp
+*~
+
+# --- Autoriser explicitement les exemples (pas de secret dedans) ------
+!*.example
+!.env.example
+!.vscode/launch.json.example
+
+# File d'attente locale (pointages nominatifs — nLPD/RGPD)
+recognition-client/queue/*.json
+recognition-client/queue/sent/*.json
