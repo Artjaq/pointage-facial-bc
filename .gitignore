@@ -66,6 +66,7 @@ ENV/
 rad.json
 # launch.json contient le nom du serveur BC / bastion → exclu
 .vscode/launch.json
+**/.vscode/launch.json
 
 # --- macOS / éditeurs -------------------------------------------------
 .DS_Store

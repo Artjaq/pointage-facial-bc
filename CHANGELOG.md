@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-06-22
+- Intégration de l'extension AL (app.json + src/) dans bc-extension/ (fichiers : bc-extension/**).
+
+## 2026-06-22
 - README : retrait de la mention "dépôt privé" (repo public assumé).
 
 ## 2026-06-22

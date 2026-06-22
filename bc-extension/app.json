@@ -1,0 +1,32 @@
+{
+  "id": "a20c0585-50c5-4de7-b534-639a158f8b52",
+  "name": "PRF Pointage Reconnaissance",
+  "publisher": "PRF",
+  "version": "1.0.0.0",
+  "brief": "Pointage par reconnaissance faciale avec agrégation vers feuilles de temps BC",
+  "description": "Tables custom (50100-50101), pages API OData (50110-50111), codeunit d'agrégation (50120) et permission set pour le système de pointage biométrique.",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [],
+  "screenshots": [],
+  "platform": "1.0.0.0",
+  "application": "26.0.0.0",
+  "idRanges": [
+    {
+      "from": 50100,
+      "to": 50149
+    }
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  },
+  "runtime": "15.0",
+  "features": [
+    "NoImplicitWith"
+  ]
+}
