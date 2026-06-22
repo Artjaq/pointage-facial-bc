@@ -39,8 +39,3 @@ via **Power BI**. Rendu : **26 juin 2026**.
 - Client Python : voir `recognition-client/README.md`
   (prérequis Apple Silicon : `brew install cmake` **avant** `pip install dlib`).
 - Extension AL : voir `bc-extension/README.md` (symboles BC à télécharger dans VS Code).
-
-## Dépôt privé
-
-Ce repo est **privé** : il référence une instance BC interne et un contexte métier.
-Ne jamais le rendre public.
