@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp docs/analyse-risques-couts-business-cases.md docs/planification-ecarts.md /tmp/ && ls /tmp/analyse-risques* /tmp/planification*)"
+    ],
+    "additionalDirectories": [
+      "/Users/admin/Dev/ES/PI2/pointage-facial/docs"
+    ]
+  }
+}
