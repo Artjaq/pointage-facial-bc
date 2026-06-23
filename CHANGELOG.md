@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-23
+- Correction bug seuils : DISTANCE_MAX 0.60→0.55, SEUIL_CONCORDANCE 0.60→0.50 avec justification faux positif/négatif (fichiers : recognition-client/config.py)
+- Correction bug perte webcam macOS : reconnexion automatique (5 tentatives × 1 s) au lieu de break sur ret=False (fichiers : recognition-client/recognize.py)
+
 ## 2026-06-22
 - docs: ajout analyse risques/TCO/ROI + 2 business cases et planification prévu/réalisé (fichiers : docs/analyse-risques-couts-business-cases.md, docs/planification-ecarts.md)
 

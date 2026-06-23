@@ -6,11 +6,22 @@ Modifier uniquement cette section pour adapter le déploiement.
 from pathlib import Path
 
 # ── Seuils de reconnaissance ──────────────────────────────────────────────────
-# Score minimum (concordance) pour un pointage "fiable" ; en-dessous → "À vérifier"
-SEUIL_CONCORDANCE = 0.60
-# Distance KNN au-delà de laquelle le visage est rejeté comme "Inconnu"
-# (équivaut à la tolérance standard dlib de 0.6)
-DISTANCE_MAX = 0.60
+# Distance KNN au-delà de laquelle le visage est rejeté comme "Inconnu".
+# 0.55 est légèrement plus strict que la tolérance dlib par défaut (0.6) :
+#   → réduit les faux positifs (mauvaise identité acceptée)
+#   → contrepartie : très légère hausse des faux négatifs (collaborateur connu
+#     rejeté comme "Inconnu") si l'éclairage ou l'angle est défavorable.
+#   Abaisser encore (ex. 0.50) renforce la sécurité mais augmente les faux négatifs.
+#   Hausser (≥ 0.60) tolère plus d'identités ambiguës → davantage de faux positifs.
+DISTANCE_MAX = 0.55
+
+# Score minimum (= 1 − distance) pour un pointage "OK" ; en dessous → "À vérifier".
+# Avec DISTANCE_MAX = 0.55, les scores acceptés vont de 0.45 à 1.0.
+# Fixer 0.50 crée une zone grise étroite (distance 0.50–0.55, score 0.45–0.50)
+# signalée "À vérifier", tandis que les correspondances nettes (distance < 0.50)
+# sont validées "OK". Hausser cette valeur génère trop de "À vérifier" inutiles ;
+# abaisser trop accepte automatiquement des correspondances borderline.
+SEUIL_CONCORDANCE = 0.50
 
 # ── Caméra ────────────────────────────────────────────────────────────────────
 # Index de la caméra à utiliser (0 = première détectée, 1 = caméra intégrée MacBook

@@ -7,6 +7,7 @@ Touche Q pour quitter.
 import json
 import pickle
 import sys
+import time
 import uuid
 from datetime import date, datetime
 from pathlib import Path
@@ -25,6 +26,29 @@ from config import (
     SOURCE_POSTE,
     KNN_MODEL_FILE,
 )
+
+
+# ── Reconnexion webcam ────────────────────────────────────────────────────────
+_MAX_RECONNECT    = 5    # tentatives avant abandon
+_RECONNECT_DELAY  = 1.0  # secondes entre chaque tentative
+
+
+def _reconnect_webcam() -> "cv2.VideoCapture | None":
+    """Recrée la capture après une perte de flux (macOS AVFoundation intermittent)."""
+    for tentative in range(1, _MAX_RECONNECT + 1):
+        print(f"[WARN] Reconnexion webcam {tentative}/{_MAX_RECONNECT}…")
+        time.sleep(_RECONNECT_DELAY)
+        cap_new = cv2.VideoCapture(CAMERA_INDEX)
+        if cap_new.isOpened():
+            cap_new.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            cap_new.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap_new.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            ret, _ = cap_new.read()
+            if ret:
+                print("[INFO] Flux webcam restauré.")
+                return cap_new
+        cap_new.release()
+    return None
 
 
 # ── Chargement du modèle ──────────────────────────────────────────────────────
@@ -124,8 +148,12 @@ def main() -> None:
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("[ERREUR] Perte du flux webcam.")
-            break
+            cap_new = _reconnect_webcam()
+            if cap_new is None:
+                print(f"[ERREUR] Flux webcam perdu après {_MAX_RECONNECT} tentatives.")
+                break
+            cap = cap_new
+            continue
 
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
