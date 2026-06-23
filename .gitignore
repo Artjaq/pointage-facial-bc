@@ -63,6 +63,7 @@ ENV/
 .snapshots/
 # Extension compilée
 *.app
+bc-extension/output/
 rad.json
 # launch.json contient le nom du serveur BC / bastion → exclu
 .vscode/launch.json

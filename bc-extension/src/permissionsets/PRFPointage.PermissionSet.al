@@ -17,6 +17,8 @@ permissionset 50100 "PRF Pointage"
         page "PRF Saisie Heures API" = X,
         page "PRF Prevision Charge API" = X,
         codeunit "PRF Gen. Feuilles de Temps" = X,
+        codeunit "PRF Demo Setup" = X,
+        codeunit "PRF Demo Cleanup" = X,
 
         // Lecture des objets standard BC nécessaires
         tabledata "Time Sheet Header" = RM,   // Table 950

@@ -166,10 +166,14 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
     end;
 
     // Cherche un en-tête pour la ressource/semaine ou en crée un.
-    // Le No. est assigné automatiquement par le trigger OnInsert de Time Sheet Header
-    // depuis la souche configurée dans Resources Setup.
-    // Prérequis : souche de numéros feuilles de temps configurée dans Resources Setup.
+    // Prérequis : souche de numéros "Time Sheet Nos." configurée dans Resources Setup (ARBZEITTAB).
+    // IMPORTANT : le No. doit être assigné AVANT Validate("Resource No.") et Insert,
+    // car OnInsert appelle AddToMyTimeSheets(UserID) qui lit "No." directement.
+    // Motif identique au rapport standard "Create Time Sheets" (Report 950).
     local procedure FindOrCreateTSHeader(ResourceCode: Code[20]; StartDate: Date; var TSHeader: Record "Time Sheet Header"; var Created: Boolean): Boolean
+    var
+        ResourcesSetup: Record "Resources Setup";
+        NoSeries: Codeunit "No. Series";
     begin
         Created := false;
 
@@ -178,13 +182,12 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
         if TSHeader.FindFirst() then
             exit(true);
 
-        // Création directe — Time Sheet Management n'expose pas de procédure simple de création en BC 26.
+        ResourcesSetup.Get();
         TSHeader.Init();
-        TSHeader.Validate("Resource No.", ResourceCode);
-        TSHeader.Validate("Starting Date", StartDate);
+        TSHeader."No." := NoSeries.GetNextNo(ResourcesSetup."Time Sheet Nos.", Today());
+        TSHeader."Starting Date" := StartDate;
         TSHeader."Ending Date" := StartDate + 6;
-        // "Owner User ID" : laisser vide pour la création batch ; BC le tolère pour l'agrégation automatique.
-        // Renseigner si les workflows d'approbation standard doivent être utilisés.
+        TSHeader.Validate("Resource No.", ResourceCode);
         if not TSHeader.Insert(true) then
             exit(false);
 

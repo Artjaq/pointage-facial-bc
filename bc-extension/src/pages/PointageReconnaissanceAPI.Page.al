@@ -47,8 +47,7 @@ page 50110 "PRF Pointage Rec. API"
                 field(pointageType; Rec."Type")
                 {
                     Caption = 'Type';
-                    // Valeurs JSON : 0 = Entrée, 1 = Sortie (option ordinal)
-                    // TODO : envisager un Enum pour sérialisation en string ('Entree'/'Sortie')
+                    // BC 26 API sérialise les Option en nom de membre string ('Entree'/'Sortie'), pas en ordinal.
                 }
                 field(scoreConcordance; Rec."Score Concordance")
                 {
@@ -61,7 +60,7 @@ page 50110 "PRF Pointage Rec. API"
                 field(statut; Rec."Statut")
                 {
                     Caption = 'Statut';
-                    // Valeurs JSON : 0 = Validé, 1 = À vérifier (option ordinal)
+                    // BC 26 API sérialise les Option en nom de membre string ('Valide'/'AVerifier'), pas en ordinal.
                 }
                 field(traite; Rec."Traite")
                 {
