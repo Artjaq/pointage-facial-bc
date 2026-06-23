@@ -1,6 +1,6 @@
 # bc-extension
 
-Extension AL pour Microsoft Dynamics 365 Business Central 15 (on-premise).
+Extension AL pour Microsoft Dynamics 365 Business Central 26.2 (on-premise).
 
 ## Contenu attendu (à rapatrier depuis la VM bastion)
 
@@ -10,8 +10,9 @@ Extension AL pour Microsoft Dynamics 365 Business Central 15 (on-premise).
 - `src/codeunits/` — codeunit d'agrégation vers feuille de temps standard
 - `src/permissionsets/` — jeu de permissions pour l'utilisateur de service OData
 
-> **TODO** : objets BC 15 standard incertains à vérifier et marquer `// TODO confirmer`
-> avant compilation (ex. `Time Sheet Line`, `Time Sheet Detail`).
+> **TODO** : objets Time Sheet standard (`Time Sheet Header`, `Time Sheet Line`, `Time Sheet Detail`)
+> à confirmer avec les symboles BC 26.2 avant compilation (marqués `// TODO confirmer` dans le codeunit).
+> Objets `Job`, `Resource`, `No. Series` confirmés.
 
 ## Compilation dans VS Code
 

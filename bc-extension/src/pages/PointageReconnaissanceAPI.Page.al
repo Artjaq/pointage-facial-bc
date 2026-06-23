@@ -13,7 +13,7 @@ page 50110 "PRF Pointage Rec. API"
     SourceTable = "PRF Pointage Reconnaissance";
     DelayedInsert = true; // Nécessaire pour API : l'insert est différé après validation de tous les champs du POST
     Caption = 'API Pointage Reconnaissance';
-    ODataKeyFields = id;
+    ODataKeyFields = SystemId;
 
     layout
     {

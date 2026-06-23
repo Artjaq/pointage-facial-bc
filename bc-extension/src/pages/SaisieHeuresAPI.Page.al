@@ -10,11 +10,11 @@ page 50111 "PRF Saisie Heures API"
     APIVersion = 'v1.0';
     EntityName = 'job';
     EntitySetName = 'jobs';
-    SourceTable = Job; // TODO confirmer avec symboles - "Job" (167) ou "Project" selon version BC
+    SourceTable = Job;
     DelayedInsert = false;
     Editable = false; // GET-only dans cette itération
     Caption = 'API Saisie Heures (Jobs)';
-    ODataKeyFields = id;
+    ODataKeyFields = SystemId;
 
     layout
     {
@@ -37,17 +37,17 @@ page 50111 "PRF Saisie Heures API"
                     Caption = 'Description';
                     Editable = false;
                 }
-                field(billToCustomerNumber; Rec."Bill-to Customer No.") // TODO confirmer avec symboles
+                field(billToCustomerNumber; Rec."Bill-to Customer No.")
                 {
                     Caption = 'Client facturé No.';
                     Editable = false;
                 }
-                field(status; Rec.Status) // TODO confirmer avec symboles - champ "Status" ou "Blocked"
+                field(status; Rec.Status)
                 {
                     Caption = 'Statut';
                     Editable = false;
                 }
-                field(personResponsible; Rec."Person Responsible") // TODO confirmer avec symboles
+                field(personResponsible; Rec."Person Responsible")
                 {
                     Caption = 'Responsable';
                     Editable = false;

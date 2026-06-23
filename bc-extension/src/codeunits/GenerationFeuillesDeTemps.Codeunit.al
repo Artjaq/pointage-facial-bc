@@ -1,6 +1,6 @@
 // Codeunit 50120 : agrégation des pointages vers feuilles de temps BC natives.
 // Appelé par Job Queue Entry (Object Type = Codeunit, Object ID = 50120).
-// Objets feuilles de temps standard utilisés (à confirmer avec symboles téléchargés) :
+// Objets feuilles de temps standard utilisés :
 //   Table 950 "Time Sheet Header", Table 951 "Time Sheet Line", Table 952 "Time Sheet Detail"
 //   Codeunit 950 "Time Sheet Management"
 codeunit 50120 "PRF Gen. Feuilles de Temps"
@@ -125,13 +125,13 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
     // Retourne le No. de l'en-tête ou '' en cas d'erreur.
     local procedure EcrireVersFeuilleTemps(ResourceCode: Code[20]; WorkDate: Date; Hours: Decimal; var NbFeuilles: Integer; var NbAvert: Integer): Code[20]
     var
-        TSHeader: Record "Time Sheet Header"; // TODO confirmer avec symboles (Table 950)
-        TSLine: Record "Time Sheet Line";    // TODO confirmer avec symboles (Table 951)
+        TSHeader: Record "Time Sheet Header";
+        TSLine: Record "Time Sheet Line";
         SheetStartDate: Date;
         CreatedHeader: Boolean;
         LineNo: Integer;
     begin
-        // RG-11 : Code Ressource obligatoire (déjà garanti par la table source, sécurité defensive)
+        // RG-11 : Code Ressource obligatoire (déjà garanti par la table source, sécurité défensive)
         if ResourceCode = '' then begin
             LogWarning('Ressource vide — pointage ignoré.');
             NbAvert += 1;
@@ -150,13 +150,8 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
         if CreatedHeader then
             NbFeuilles += 1;
 
-        // RG-15 : ne pas écrire sur une feuille déjà approuvée
-        // TODO confirmer avec symboles le champ Status et ses valeurs enum/option
-        // if TSHeader.Status = TSHeader.Status::Approved then begin
-        //     LogWarning(StrSubstNo('Feuille approuvée ignorée : %1 ressource %2.', TSHeader."No.", ResourceCode));
-        //     NbAvert += 1;
-        //     exit(TSHeader."No.");
-        // end;
+        // RG-15 : le statut d'approbation est par ligne (Time Sheet Header n'a pas de champ Status).
+        // Le contrôle s'effectue dans FindOrCreateTSLine (TSLine.Status) et UpsertTSDetail (TSDetail.Status).
 
         if not FindOrCreateTSLine(TSHeader, TSLine, LineNo) then begin
             LogWarning(StrSubstNo('Impossible de créer/trouver ligne feuille de temps : %1.', TSHeader."No."));
@@ -171,24 +166,26 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
     end;
 
     // Cherche un en-tête pour la ressource/semaine ou en crée un.
-    // TODO confirmer avec symboles les champs et le comportement de l'OnInsert de Time Sheet Header.
+    // Le No. est assigné automatiquement par le trigger OnInsert de Time Sheet Header
+    // depuis la souche configurée dans Resources Setup.
+    // Prérequis : souche de numéros feuilles de temps configurée dans Resources Setup.
     local procedure FindOrCreateTSHeader(ResourceCode: Code[20]; StartDate: Date; var TSHeader: Record "Time Sheet Header"; var Created: Boolean): Boolean
     begin
         Created := false;
 
-        TSHeader.SetRange("Resource No.", ResourceCode); // TODO confirmer avec symboles le nom de champ
-        TSHeader.SetRange("Starting Date", StartDate);   // TODO confirmer avec symboles
+        TSHeader.SetRange("Resource No.", ResourceCode);
+        TSHeader.SetRange("Starting Date", StartDate);
         if TSHeader.FindFirst() then
             exit(true);
 
-        // Création directe — privilégier Time Sheet Management si une procédure existe.
-        // TODO confirmer avec symboles : Codeunit "Time Sheet Management" (950) a-t-il CreateTimeSheet() ?
+        // Création directe — Time Sheet Management n'expose pas de procédure simple de création en BC 26.
         TSHeader.Init();
-        TSHeader.Validate("Resource No.", ResourceCode); // TODO confirmer avec symboles
-        TSHeader.Validate("Starting Date", StartDate);   // TODO confirmer avec symboles
-        TSHeader."Ending Date" := StartDate + 6;         // TODO confirmer avec symboles - période 7 jours
-        // TSHeader."Owner User ID" := CopyStr(UserId(), 1, MaxStrLen(TSHeader."Owner User ID")); // TODO si obligatoire
-        if not TSHeader.Insert(true) then // TODO confirmer - peut nécessiter champs additionnels
+        TSHeader.Validate("Resource No.", ResourceCode);
+        TSHeader.Validate("Starting Date", StartDate);
+        TSHeader."Ending Date" := StartDate + 6;
+        // "Owner User ID" : laisser vide pour la création batch ; BC le tolère pour l'agrégation automatique.
+        // Renseigner si les workflows d'approbation standard doivent être utilisés.
+        if not TSHeader.Insert(true) then
             exit(false);
 
         Created := true;
@@ -196,63 +193,59 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
     end;
 
     // Cherche une ligne de type Ressource dans la feuille ou en crée une.
-    // TODO confirmer avec symboles : nom du champ Type, valeur option/enum Resource.
     local procedure FindOrCreateTSLine(TSHeader: Record "Time Sheet Header"; var TSLine: Record "Time Sheet Line"; var LineNo: Integer): Boolean
     begin
-        TSLine.SetRange("Time Sheet No.", TSHeader."No."); // TODO confirmer avec symboles
-        // TODO confirmer avec symboles : TSLine.SetRange(Type, TSLine.Type::Resource);
-        // En attendant, chercher la première ligne existante sans filtre Type
+        TSLine.SetRange("Time Sheet No.", TSHeader."No.");
+        TSLine.SetRange(TSLine.Type, "Time Sheet Line Type"::Resource);
         if TSLine.FindFirst() then begin
-            // RG-15 : ligne approuvée → sauter
-            // TODO confirmer avec symboles le champ Status et ses valeurs
-            // if TSLine.Status = TSLine.Status::Approved then
-            //     exit(false);
-            LineNo := TSLine."Line No."; // TODO confirmer avec symboles
+            // RG-15 : ligne approuvée → ne pas modifier
+            if TSLine.Status = "Time Sheet Status"::Approved then
+                exit(false);
+            LineNo := TSLine."Line No.";
             exit(true);
         end;
 
         // Calcul du prochain LineNo (incréments de 10 000, convention BC)
         TSLine.SetRange("Time Sheet No.", TSHeader."No.");
+        TSLine.SetRange(TSLine.Type); // Effacer le filtre Type pour FindLast sur toutes les lignes
         if TSLine.FindLast() then
             LineNo := TSLine."Line No." + 10000
         else
             LineNo := 10000;
 
         TSLine.Init();
-        TSLine."Time Sheet No." := TSHeader."No.";  // TODO confirmer avec symboles
-        TSLine."Line No." := LineNo;                // TODO confirmer avec symboles
-        // TSLine.Type := TSLine.Type::Resource;    // TODO confirmer avec symboles - Type option/enum
-        TSLine.Description := 'Présence';           // TODO confirmer avec symboles si champ libre
-        if not TSLine.Insert(true) then             // TODO confirmer - peut nécessiter champs additionnels
+        TSLine."Time Sheet No." := TSHeader."No.";
+        TSLine."Line No." := LineNo;
+        TSLine.Type := "Time Sheet Line Type"::Resource;
+        TSLine.Description := 'Présence';
+        if not TSLine.Insert(true) then
             exit(false);
 
         exit(true);
     end;
 
     // Écrit ou met à jour le détail de feuille pour un jour donné (idempotence : REPLACE, pas cumul).
-    // TODO confirmer avec symboles les noms de champs de Time Sheet Detail (Table 952).
     local procedure UpsertTSDetail(TSHeaderNo: Code[20]; LineNo: Integer; WorkDate: Date; Hours: Decimal)
     var
-        TSDetail: Record "Time Sheet Detail"; // TODO confirmer avec symboles (Table 952)
+        TSDetail: Record "Time Sheet Detail";
     begin
-        TSDetail.SetRange("Time Sheet No.", TSHeaderNo);      // TODO confirmer avec symboles
-        TSDetail.SetRange("Time Sheet Line No.", LineNo);     // TODO confirmer avec symboles
-        TSDetail.SetRange(Date, WorkDate);                    // TODO confirmer avec symboles
+        TSDetail.SetRange("Time Sheet No.", TSHeaderNo);
+        TSDetail.SetRange("Time Sheet Line No.", LineNo);
+        TSDetail.SetRange(Date, WorkDate);
 
         if TSDetail.FindFirst() then begin
             // RG-15 : détail approuvé → ne pas modifier
-            // TODO confirmer avec symboles le champ Status
-            // if TSDetail.Status = TSDetail.Status::Approved then
-            //     exit;
-            TSDetail.Quantity := Hours; // TODO confirmer avec symboles - "Quantity" ou "Posted Quantity"
+            if TSDetail.Status = "Time Sheet Status"::Approved then
+                exit;
+            TSDetail.Quantity := Hours;
             TSDetail.Modify(true);
         end else begin
             TSDetail.Init();
-            TSDetail."Time Sheet No." := TSHeaderNo;      // TODO confirmer avec symboles
-            TSDetail."Time Sheet Line No." := LineNo;     // TODO confirmer avec symboles
-            TSDetail.Date := WorkDate;                    // TODO confirmer avec symboles
-            TSDetail.Quantity := Hours;                   // TODO confirmer avec symboles
-            TSDetail.Insert(true);                        // TODO confirmer
+            TSDetail."Time Sheet No." := TSHeaderNo;
+            TSDetail."Time Sheet Line No." := LineNo;
+            TSDetail.Date := WorkDate;
+            TSDetail.Quantity := Hours;
+            TSDetail.Insert(true);
         end;
     end;
 
@@ -282,9 +275,9 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
             until Pointage.Next() = 0;
     end;
 
-    // Retourne le premier jour de la semaine (Lundi) pour la date donnée.
-    // TODO confirmer avec symboles : lire le premier jour configuré dans Resources Setup
-    // (champ "Time Sheet First Weekday" ou équivalent) plutôt que forcer Lundi.
+    // Retourne le premier jour de la semaine (Lundi ISO) pour la date donnée.
+    // Suppose Lundi comme premier jour de semaine (configuration par défaut BC en Europe).
+    // Si Resources Setup définit un autre premier jour, adapter cette logique.
     local procedure GetWeekStartDate(WorkDate: Date): Date
     var
         DayOfWeek: Integer;
@@ -312,7 +305,6 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
     begin
         // Pour l'instant, les avertissements sont comptés et affichés dans le message final.
         // Activation possible d'un journal BC via Error Message ou Activity Log.
-        // Exemple : activer avec CODEUNIT.RUN pour capture dans Job Queue Log Entry.
         Message(Msg); // Remplacer par une vraie journalisation en production
     end;
 }

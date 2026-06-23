@@ -30,7 +30,7 @@ table 50100 "PRF Pointage Reconnaissance"
             Caption = 'Code Ressource';
             DataClassification = CustomerContent;
             NotBlank = true;
-            TableRelation = Resource."No."; // TODO confirmer avec symboles - table Resource disponible
+            TableRelation = Resource."No.";
         }
         field(5; "Date-Heure"; DateTime)
         {
@@ -98,7 +98,7 @@ table 50100 "PRF Pointage Reconnaissance"
 
     trigger OnInsert()
     var
-        NoSeries: Codeunit "No. Series"; // TODO confirmer avec symboles - Business Foundation BC 21+
+        NoSeries: Codeunit "No. Series"; // Business Foundation — disponible en BC 22+
     begin
         if Rec."No." = '' then begin
             Rec."No. Series" := GetNoSeriesCode();

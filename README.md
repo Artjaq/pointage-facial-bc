@@ -1,7 +1,7 @@
 # Pointage facial + saisie manuelle → Business Central → Power BI
 
 Projet II — Informatique de gestion ES (CPNE). Intégration de données externes
-dans **Microsoft Dynamics 365 Business Central 15 (on-premise)** et restitution
+dans **Microsoft Dynamics 365 Business Central 26.2 (on-premise)** et restitution
 via **Power BI**. Rendu : **26 juin 2026**.
 
 ## Architecture en une phrase
@@ -22,7 +22,7 @@ via **Power BI**. Rendu : **26 juin 2026**.
 | Dossier | Contenu | Tourne sur |
 |---------|---------|-----------|
 | `recognition-client/` | Enrôlement, reconnaissance, ingestion OData (Python) | Mac |
-| `bc-extension/` | Extension AL : tables custom, pages OData, codeunit d'agrégation, permission set | BC 15 on-prem (VM bastion) |
+| `bc-extension/` | Extension AL : tables custom, pages OData, codeunit d'agrégation, permission set | BC 26.2 on-prem (VM bastion) |
 | `manual-entry/` | Formulaire de saisie manuelle (HTML/CSS/JS) | navigateur |
 | `docs/` | CDC + specs (v2.1), résumé projet, schéma d'architecture | — |
 
