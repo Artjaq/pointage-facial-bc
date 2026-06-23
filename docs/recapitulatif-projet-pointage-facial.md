@@ -34,8 +34,8 @@ flowchart TD
     J[Prévisions de charge] -->|POST OData| K[Page API<br/>/previsionsCharge]
     K --> L[(Table 50101<br/>PRF Prevision Charge)]
 
-    G -.->|Lecture API| M[Power BI Desktop]
-    L -.->|Lecture API| M
+    I -.->|Lecture API<br/>/heuresJournalieres| M[Power BI Desktop]
+    L -.->|Lecture API<br/>/previsionsCharge| M
     M --> N[Tableau de bord<br/>Heures réelles vs prévues]
 
     style A fill:#e1f5ff,stroke:#0288d1
@@ -65,7 +65,7 @@ flowchart TD
 
 ### 4.1 Extension Business Central (code AL)
 
-L'extension `PRF Pointage Reconnaissance` (éditeur `PRF`, version 1.0.0.0) regroupe l'ensemble des objets custom.
+L'extension `PRF Pointage Reconnaissance` (éditeur `PRF`, version 1.0.0.1) regroupe l'ensemble des objets custom.
 
 **Tables**
 
@@ -81,8 +81,11 @@ L'extension `PRF Pointage Reconnaissance` (éditeur `PRF`, version 1.0.0.0) regr
 | 50110 | PRF Pointage Rec. API | `pointagesReconnaissance` | 50100 (pointages) |
 | 50111 | PRF Saisie Heures API | `jobs` | Job (projets standard BC) |
 | 50112 | PRF Prevision Charge API | `previsionsCharge` | 50101 (prévisions) |
+| 50113 | PRF Heures Journalières API | `heuresJournalieres` | Time Sheet Detail (952), heures calculées |
 
 Toutes les pages utilisent `ODataKeyFields = SystemId` et sont exposées sur l'endpoint `/api/prf/pointage/v1.0/`.
+
+La page `heuresJournalieres` expose les **heures réellement calculées** par le codeunit d'agrégation (durée journalière par ressource), directement consommable par Power BI pour la comparaison réel vs prévu. Champs exposés : `timeSheetNo`, `resourceNo`, `date`, `quantity` (heures), `status`. Elle évite de recalculer les durées dans l'outil BI : la logique métier d'appariement reste unique, côté Business Central.
 
 **Codeunits**
 
@@ -134,7 +137,7 @@ Le client `recognition-client` s'exécute sur le poste d'acquisition (macOS).
 5. **Synchronisation** — `sync_bc.py` envoie les pointages en attente vers l'API Business Central (`POST /pointagesReconnaissance`) et les déplace vers `queue/sent/`.
 6. **Stockage** — Business Central enregistre chaque pointage dans la table 50100.
 7. **Traitement** — Le codeunit 50120 (déclenché manuellement ou par tâche planifiée) lit les pointages validés et non traités, apparie les paires entrée/sortie par collaborateur et par jour, calcule la durée travaillée (gestion correcte du passage à minuit), puis crée ou met à jour les feuilles de temps standard (en-tête 950, ligne 951, détails journaliers 952). Les pointages traités sont marqués comme tels.
-8. **Restitution** — Power BI lit les tables de pointages et de prévisions via l'API et présente un tableau de bord comparant heures réelles et heures prévues.
+8. **Restitution** — Power BI lit, via l'API, les **heures journalières déjà calculées** (entité `heuresJournalieres`, issue des feuilles de temps) et les **prévisions de charge** (entité `previsionsCharge`), puis présente un tableau de bord comparant heures réelles et heures prévues. Les pointages bruts (`pointagesReconnaissance`) restent disponibles pour les indicateurs de qualité (score, statut « À vérifier »).
 
 **Traitement des cas particuliers par le codeunit 50120 :**
 
