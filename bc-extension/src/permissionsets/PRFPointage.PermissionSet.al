@@ -17,6 +17,8 @@ permissionset 50100 "PRF Pointage"
         page "PRF Saisie Heures API" = X,
         page "PRF Prevision Charge API" = X,
         page "PRF Heures Journalieres API" = X,
+        page "PRF Pointages Rec. List" = X,
+        page "PRF Previsions Charge List" = X,
         codeunit "PRF Gen. Feuilles de Temps" = X,
         codeunit "PRF Demo Setup" = X,
         codeunit "PRF Demo Cleanup" = X,

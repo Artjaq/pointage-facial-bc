@@ -12,6 +12,8 @@ Extension AL pour Microsoft Dynamics 365 Business Central 26.2 (on-premise).
 | Page 50111 | `src/pages/SaisieHeuresAPI.Page.al` | API OData GET pour lecture des projets BC (saisie manuelle) |
 | Page 50112 | `src/pages/PrevisionChargeAPI.Page.al` | API OData GET/POST pour prévisions de charge (source Power BI) |
 | Page 50113 | `src/pages/HeuresJournalieresAPI.Page.al` | API OData GET pour heures journalières réelles (Table 952, enrichi du code ressource via Table 950) |
+| Page 50114 | `src/pages/PointageReconnaissanceList.Page.al` | Liste BC (client web, loupe) — consultation des pointages Table 50100 |
+| Page 50115 | `src/pages/PrevisionChargeList.Page.al` | Liste BC (client web, loupe) — consultation des prévisions Table 50101 |
 | Codeunit 50120 | `src/codeunits/GenerationFeuillesDeTemps.Codeunit.al` | Agrégation des pointages vers feuilles de temps BC (Tables 950-952) |
 | Codeunit 50121 | `src/codeunits/DemoSetup.Codeunit.al` | Initialisation démo : souche PRF-PONT + Owner/Approver ressources |
 | Codeunit 50122 | `src/codeunits/DemoCleanup.Codeunit.al` | Nettoyage ciblé des données démo PRF (filtre sur ressources PRF) |
