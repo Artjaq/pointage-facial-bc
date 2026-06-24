@@ -1,6 +1,7 @@
 // Page 50113 : API OData GET-only pour Power BI — heures journalières réelles.
-// Expose les enregistrements de la table 952 "Time Sheet Detail" (générés par CU 50120)
-// enrichis du code ressource (lu sur l'en-tête 950) qui n'existe pas directement sur 952.
+// Expose les enregistrements de la table 952 "Time Sheet Detail" (générés par CU 50120).
+// Le code ressource est exposé via le FlowField "PRF Resource No." (TableExtension 50100),
+// ce qui garantit Type="Edm.String" MaxLength="20" dans le $metadata OData (requis par Power BI).
 // URL : http://<serveur>:7048/BC260/api/prf/pointage/v1.0/companies(<guid>)/heuresJournalieres
 page 50113 "PRF Heures Journalieres API"
 {
@@ -31,7 +32,7 @@ page 50113 "PRF Heures Journalieres API"
                     Caption = 'No. Feuille';
                     Editable = false;
                 }
-                field(resourceNo; ResourceNo)
+                field(resourceNo; Rec."PRF Resource No.")
                 {
                     Caption = 'Code Ressource';
                     Editable = false;
@@ -55,16 +56,8 @@ page 50113 "PRF Heures Journalieres API"
         }
     }
 
-    var
-        ResourceNo: Code[20];
-
     trigger OnAfterGetRecord()
-    var
-        TSHeader: Record "Time Sheet Header";
     begin
-        if TSHeader.Get(Rec."Time Sheet No.") then
-            ResourceNo := TSHeader."Resource No."
-        else
-            ResourceNo := '';
+        Rec.CalcFields("PRF Resource No.");
     end;
 }

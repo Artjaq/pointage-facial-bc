@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-06-24
+- Correction $metadata API heuresJournalieres rejeté par Power BI : champ resourceNo était une variable de page (Edm.String sans MaxLength), remplacé par FlowField "PRF Resource No." via TableExtension 50100 sur "Time Sheet Detail" (CalcFormula lookup vers "Time Sheet Header"."Resource No.") ; metadata corrigé (MaxLength="20" présent) ; v1.0.0.3→1.0.0.4 (fichiers : bc-extension/src/tables/TimeSheetDetailExt.TableExt.al, bc-extension/src/pages/HeuresJournalieresAPI.Page.al, bc-extension/app.json).
+
 ## 2026-06-23
 - Ajout pages Liste 50114 "PRF Pointages Rec. List" (SourceTable=50100, UsageCategory=Lists, tri Date-Heure décroissant) et 50115 "PRF Previsions Charge List" (SourceTable=50101) accessibles via la loupe BC ; PermissionSet 50100 mis à jour ; version 1.0.0.2→1.0.0.3 ; compilation 0 erreur, déploiement BC260 confirmé (fichiers : bc-extension/src/pages/PointageReconnaissanceList.Page.al, bc-extension/src/pages/PrevisionChargeList.Page.al, bc-extension/src/permissionsets/PRFPointage.PermissionSet.al, bc-extension/app.json).
 - Ajout page API 50113 "PRF Heures Journalieres API" (EntitySetName=heuresJournalieres) exposant la table 952 "Time Sheet Detail" enrichie du code ressource (lu sur l'en-tête 950 via OnAfterGetRecord) ; PermissionSet 50100 mis à jour ; version 1.0.0.1→1.0.0.2 ; compilation 0 erreur, déploiement BC260 confirmé : 13 enregistrements retournés (ALAIN×5, ANNETTE×4, CHRISTIAN×4, lun-ven 13-17 jan 2026) avec champs id/timeSheetNo/resourceNo/date/quantity/status (fichiers : bc-extension/src/pages/HeuresJournalieresAPI.Page.al, bc-extension/src/permissionsets/PRFPointage.PermissionSet.al, bc-extension/app.json).
