@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2026-06-25
+- Création ressource ARTHUR (Arthur Jaquier) dans CRONUS (Suisse) SA : Type=Person, Unité=HEURE, Use Time Sheet=true, Owner/Approver=ARTHUR JAQUIER, groupes SERVICES/NORMAL — POST OData HTTP 201 confirmé (fichiers : docs/procedure-creation-ressource.md).
+- Bascule auth web client BC (IIS) vers NavUserPassword : navsettings.json mis à jour, AppPool recyclé — formulaire login disponible sur http://BC2025/BC260 (hors repo).
+- Accès BC2025\BC et ARTHUR JAQUIER : mots de passe et SUPER assignés (hors repo).
 - Alignement complet du payload pointage sur le schéma BC : ajout du champ CodeRessource (NotBlank, = CodeCollaborateur) ; mapping des valeurs d'enum vers les OptionMembers AL (Type ENTREE/SORTIE → Entree/Sortie, Statut OK/À vérifier → Valide/AVerifier) ; horodatage timezone-aware (Edm.DateTimeOffset). Corrige les rejets BC 400 sur les pointages live. Avertissement loggé si une valeur d'enum n'est pas mappée (fichiers : recognition-client/sync_bc.py).
 - Correction format datetime OData : recognize.py utilise datetime.now().astimezone() (offset local +01:00/+02:00) ; sync_bc.py ajoute helper _format_datetime_bc() en défense pour les logs naïfs déjà en queue/ — BC exige Edm.DateTimeOffset, rejetait silencieusement les datetime sans timezone en 400 BadRequest (fichiers : recognition-client/recognize.py, recognition-client/sync_bc.py).
 - Contrainte d'unicité sur identité naturelle pointage : clé K1 étendue à ("Code Ressource", "Date-Heure", "Type") avec Unique = true — garantit l'idempotence des POST OData ; 0 doublon vérifié sur les 3 sociétés avant déploiement ; version 1.0.0.4→1.0.0.5 (fichiers : bc-extension/src/tables/PointageReconnaissance.Table.al, bc-extension/app.json).
