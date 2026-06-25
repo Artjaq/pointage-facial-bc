@@ -41,18 +41,46 @@ def _format_datetime_bc(dt_str: str) -> str:
 
 # ── Mapping vers le schéma BC ─────────────────────────────────────────────────
 
+# OData v4 est sensible à la casse sur les valeurs d'enum BC (member names).
+# recognize.py écrit les valeurs locales en majuscules ou en français libre ;
+# ces dicts les convertissent vers les OptionMembers AL attendus par BC.
+_TYPE_BC   = {"ENTREE": "Entree", "SORTIE": "Sortie"}
+_STATUT_BC = {"OK": "Valide", "À vérifier": "AVerifier"}
+
+
 def construire_payload(log: dict) -> dict:
     """
     Mappe les champs du log local vers les champs de la table OData BC.
     Adapter les noms de champs si la table BC porte des noms différents.
     """
+    type_local   = log["type"]
+    statut_local = log["statut"]
+
+    type_bc   = _TYPE_BC.get(type_local)
+    statut_bc = _STATUT_BC.get(statut_local)
+
+    if type_bc is None:
+        logger.warning(
+            "Valeur de type inconnue du mapping BC : %r — envoyée telle quelle (risque 400).",
+            type_local,
+        )
+        type_bc = type_local
+
+    if statut_bc is None:
+        logger.warning(
+            "Valeur de statut inconnue du mapping BC : %r — envoyée telle quelle (risque 400).",
+            statut_local,
+        )
+        statut_bc = statut_local
+
     return {
-        "CodeCollaborateur": log["id"],           # Clé naturelle collaborateur
+        "CodeCollaborateur": log["id"],
+        "CodeRessource":     log["id"],
         "DateHeure":         _format_datetime_bc(log["datetime"]),
-        "Type":              log["type"],           # "ENTREE" ou "SORTIE"
-        "ScoreConcordance":  log["score"],          # Décimal 0-1 (4 décimales)
-        "SourcePoste":       log["source_poste"],   # Identifiant du terminal
-        "Statut":            log["statut"],         # "OK" ou "À vérifier"
+        "PointageType":      type_bc,
+        "ScoreConcordance":  log["score"],
+        "SourcePoste":       log["source_poste"],
+        "Statut":            statut_bc,
     }
 
 
