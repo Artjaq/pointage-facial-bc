@@ -160,8 +160,9 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
             exit('');
         end;
 
-        // RG-13 : idempotence — UpsertTSDetail remplace, n'additionne pas
-        UpsertTSDetail(TSHeader."No.", LineNo, WorkDate, Hours);
+        // Recalcul complet : total des heures depuis TOUS les pointages Valide du jour
+        // (Traite=true et false confondus) — idempotent quel que soit le nombre de runs.
+        UpsertTSDetail(TSHeader."No.", LineNo, WorkDate, CalcTotalHeuresJour(ResourceCode, WorkDate));
 
         exit(TSHeader."No.");
     end;
@@ -228,7 +229,8 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
         exit(true);
     end;
 
-    // Écrit ou met à jour le détail de feuille pour un jour donné (idempotence : REPLACE, pas cumul).
+    // Écrit ou met à jour le détail de feuille pour un jour donné.
+    // Hours est le total complet recalculé par CalcTotalHeuresJour — := est correct (pas +=).
     local procedure UpsertTSDetail(TSHeaderNo: Code[20]; LineNo: Integer; WorkDate: Date; Hours: Decimal)
     var
         TSDetail: Record "Time Sheet Detail";
@@ -277,6 +279,39 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
                 Pointage.Modify(false); // Pas de validation complète pour performance
                 NbPointages += 1;
             until Pointage.Next() = 0;
+    end;
+
+    // Relit tous les pointages Valide d'une journée (sans filtre Traite) et recalcule
+    // les heures totales par appariement séquentiel Entrée→Sortie.
+    // Une Entrée sans Sortie en fin de journée est ignorée silencieusement (HasOpen non relu après exit).
+    local procedure CalcTotalHeuresJour(ResourceCode: Code[20]; WorkDate: Date): Decimal
+    var
+        Pointage: Record "PRF Pointage Reconnaissance";
+        EntreeDateTime: DateTime;
+        HasOpen: Boolean;
+        Total: Decimal;
+    begin
+        Pointage.SetRange("Code Ressource", ResourceCode);
+        Pointage.SetRange("Statut", Pointage."Statut"::Valide);
+        Pointage.SetFilter("Date-Heure", '>=%1&<=%2',
+            CreateDateTime(WorkDate, 000000T), CreateDateTime(WorkDate, 235959.999T));
+        Pointage.SetCurrentKey("Code Ressource", "Date-Heure");
+        if not Pointage.FindSet() then exit(0);
+        HasOpen := false;
+        EntreeDateTime := 0DT;
+        Total := 0;
+        repeat
+            if Pointage."Type" = Pointage."Type"::Entree then begin
+                EntreeDateTime := Pointage."Date-Heure";
+                HasOpen := true;
+            end else begin
+                if HasOpen then begin
+                    Total += CalcDiffHeures(EntreeDateTime, Pointage."Date-Heure");
+                    HasOpen := false;
+                end;
+            end;
+        until Pointage.Next() = 0;
+        exit(Total);
     end;
 
     // Retourne le premier jour de la semaine (Lundi ISO) pour la date donnée.
