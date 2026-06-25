@@ -4,15 +4,15 @@
 
 | | |
 |---|---|
-| Auteur | Arthur Jaquier |
+| Auteur | Arthur [Nom] |
 | Formation | Informatique de gestion ES — CPNE |
 | Date | 23 juin 2026 |
-| Version | 2.0 |
+| Version | 1.1 |
 | Référence | Complète le CDC v2.1 (`cahier-des-charges-specs-pointage-bc-v2.1.md`) |
 
 > **Couverture grille** — Critère *« Analyse risques, coûts & business cases » (8 pts ⭐)* : registre de risques (sécurité, nLPD/RGPD, disponibilité, dépendances) + TCO + ROI + deux business cases argumentés.
 
-> **Note de lecture** — Les valeurs chiffrées sont des **hypothèses de référence** pour une PME type d'environ 10 collaborateurs ; elles servent à étayer le ROI et restent ajustables aux données réelles de l'entreprise. Le scénario de coûts est présenté en double lecture : **cadre académique** (crédit Azure Education, licences éducation → coûts proches de 0) et **scénario entreprise réelle** (déploiement en PME, base du ROI). Les prix cloud sont en USD (prix de liste Microsoft, juin 2026) avec conversion indicative en CHF (1 USD ≈ 0,88 CHF).
+> **Note de lecture** — Le scénario de coûts est présenté en double lecture : **cadre académique** (crédit Azure Education, licences éducation → coûts proches de 0) et **scénario entreprise réelle** (déploiement en PME d'environ 10 collaborateurs, base du ROI). Les valeurs financières ci-dessous sont des **hypothèses de référence cohérentes** pour ce périmètre type, à ajuster aux données réelles de l'entreprise lors d'un déploiement effectif. Les identifiants personnels et le nom de l'entreprise restent à compléter (`[Nom]`, `[Entreprise]`). Prix cloud en USD (prix de liste Microsoft, juin 2026), conversion indicative en CHF au taux ≈ 0,88.
 
 ---
 
@@ -34,37 +34,36 @@ Chaque risque est coté selon deux axes sur une échelle 1–3, la **criticité*
 | 2 — Moyen | Peut survenir une fois | Retard / perte de données partielle |
 | 3 — Élevé | Probable / récurrent | Blocage métier ou non-conformité légale |
 
-**Lecture de la criticité** : 1–2 faible (suivi), 3–4 modérée (mitigation planifiée), 6–9 élevée (mitigation prioritaire).
+**Lecture de la criticité** : 1–2 faible (suivi), 3–4 modérée (mitigation planifiée), 6–9 élevée (mitigation prioritaire). La cotation P × I reflète l'évaluation **initiale** (à l'identification) ; la colonne « risque résiduel » reflète la situation **après** mise en œuvre des mesures.
 
 ### 2.2 Registre des risques
 
-> **Convention de statut** — *Ouvert* : risque actif sous surveillance ; *Mitigé* : mesure appliquée, risque résiduel maîtrisé ; *Clos* : cause supprimée (l'élément technique sous-jacent a été résolu pendant le projet).
+| ID | Catégorie | Risque | P | I | Crit. | Mesure de mitigation | Risque résiduel |
+|----|-----------|--------|---|---|-------|----------------------|-----------------|
+| R-01 | Conformité nLPD/RGPD | Centralisation involontaire de données biométriques (image/encodage) hors du poste | 1 | 3 | 3 | Architecture à minimisation : encodages 128-D et images **confinés au Mac, chiffrés** ; seuls 4 champs non biométriques transitent vers BC ; `.gitignore` bloquant `*.pkl`, `*.jpg`, `encodings/` | Faible |
+| R-02 | Conformité nLPD/RGPD | Absence de base légale / consentement des personnes enrôlées | 2 | 3 | 6 | Recueil du **consentement explicite écrit** (art. 6 nLPD), information préalable, registre des traitements, durée de conservation limitée (90 j pour les logs) | Faible |
+| R-03 | Sécurité | Interception des logs en transit vers BC (OData) | 1 | 3 | 3 | **TLS** sur l'endpoint OData (BNF-01), authentification par compte de service dédié à droits minimaux (permission set `PRF Pointage`) | Faible |
+| R-04 | Sécurité | Compromission du poste de pointage (accès à la base d'enrôlement locale) | 1 | 3 | 3 | Chiffrement du disque (FileVault), session verrouillée, dossier `enrol_data/` à accès restreint, pas de secret en clair dans `config.py` (placeholders) | Faible |
+| R-05 | Disponibilité | BC injoignable lors de l'envoi des pointages → perte de pointages | 2 | 2 | 4 | **Tampon local** (file `queue/`) + retry idempotent dans `sync_bc.py` (gestion 409/timeout/connexion) ; aucun pointage perdu, renvoyé à la reprise (BNF-07) | Faible |
+| R-06 | Technique | Reconnaissance erronée (faux positif / faux négatif) | 2 | 2 | 4 | Seuil de concordance **0,50** et distance maximale **0,55** ; statut « À vérifier » dans la zone grise (score 0,45–0,50) (RG-04) ; pointages douteux **exclus de l'agrégation** jusqu'à régularisation (RG-14) ; contrôle humain à l'approbation | Modéré |
+| R-07 | Technique | Double comptage des heures lors d'une réexécution de l'agrégation | 1 | 3 | 3 | **Idempotence** : marquage `Traité` + clé de rapprochement `No. Feuille Temps` (RG-13, BNF-11) ; `UpsertTSDetail` remplace au lieu d'additionner | Faible |
+| R-08 | Dépendances | Objets feuilles de temps standard BC (tables 950/951/952) au schéma incertain → échec de compilation | 3 | 2 | 6 | Marquage systématique `// TODO confirmer` ; **téléchargement des symboles** avant compilation ; validation champ par champ contre les symboles réels — **réalisé : compilation 0 erreur et extension déployée au 23.06** | **Faible (clos)** |
+| R-09 | Dépendances | Mapping collaborateur ↔ ressource BC incomplet → pointages non agrégeables | 2 | 2 | 4 | Mapping obligatoire avant génération (RG-11) ; contrôle de complétude en amont de la démo ; champ `Code Ressource` `NotBlank` dans la table source | Faible |
+| R-10 | Dépendances | Continuity Camera (iPhone) capte l'index webcam 0 → mauvaise caméra | 2 | 1 | 2 | `CAMERA_INDEX` configurable (déjà à 1 par défaut) ; vérification au lancement | Faible |
+| R-11 | Disponibilité | Perte intermittente du flux webcam en capture continue (macOS) | 2 | 2 | 4 | Réduction du buffer (`CAP_PROP_BUFFERSIZE=1`) ; **correctif appliqué au 23.06 : reconnexion automatique du flux (jusqu'à 5 tentatives) avant abandon** | **Faible (clos)** |
+| R-12 | Projet / Délai | Délai serré (rendu 26.06.2026) → livrable incomplet | 3 | 3 | 9 | **Règle des planchers** : aucun critère grille laissé vide (−10 pts) ; priorisation des blocs ⭐ ; batch des tâches autonomes ; périmètre démo réduit (3 enrôlés, 1 poste) ; cœur technique sécurisé au 23.06 | Modéré |
+| R-13 | Sécurité | Lien « Publish to web » Power BI = **public sans authentification** | 3 | 2 | 6 | Dashboard **anonymisé / pseudonymisé** (codes ressource, pas de noms) ; aucune donnée biométrique ni nominative sensible ; lien non indexé, révocable | Modéré |
+| R-14 | Dépendances / Exploitation | Échec **silencieux** de la génération des feuilles de temps si les champs Propriétaire / Approbateur de feuille de temps ne sont pas renseignés sur la fiche ressource | 2 | 2 | 4 | Prérequis **documenté** ; contrôle de complétude de la configuration des ressources avant mise en service et avant la démo ; champs renseignés sur les ressources de démonstration | Faible |
 
-| ID | Catégorie | Risque | P | I | Crit. | Mesure de mitigation | Risque résiduel | Statut |
-|----|-----------|--------|---|---|-------|----------------------|-----------------|--------|
-| R-01 | Conformité nLPD/RGPD | Centralisation involontaire de données biométriques (image/encodage) hors du poste | 1 | 3 | 3 | Architecture à minimisation : encodages 128-D et images **confinés au Mac, chiffrés** ; seuls 4 champs non biométriques transitent vers BC ; `.gitignore` bloquant `*.pkl`, `*.jpg`, `encodings/`, `queue/*.json` | Faible | Mitigé |
-| R-02 | Conformité nLPD/RGPD | Absence de base légale / consentement des personnes enrôlées | 2 | 3 | 6 | Recueil du **consentement explicite écrit** (art. 6 nLPD), information préalable, registre des traitements, durée de conservation des logs limitée à **90 jours** | Faible | Mitigé |
-| R-03 | Sécurité | Interception des logs en transit vers BC (OData/API) | 1 | 3 | 3 | **TLS** sur l'endpoint API BC (port 7048, BNF-01), authentification par compte de service dédié à droits minimaux (permission set `PRF Pointage`) | Faible | Mitigé |
-| R-04 | Sécurité | Compromission du poste de pointage (accès à la base d'enrôlement locale) | 1 | 3 | 3 | Chiffrement du disque (FileVault), session verrouillée, dossier `enrol_data/` à accès restreint, pas de secret en clair dans `config.py` (placeholders) | Faible | Mitigé |
-| R-05 | Disponibilité | BC injoignable lors de l'envoi des pointages → perte de pointages | 2 | 2 | 4 | **Tampon local** (file `queue/`) + retry idempotent dans `sync_bc.py` (gestion 409/timeout/connexion) ; aucun pointage perdu, renvoyé à la reprise (BNF-07) | Faible | Mitigé |
-| R-06 | Technique | Reconnaissance erronée (faux positif / faux négatif) | 2 | 2 | 4 | Seuil de distance **0,55** (`DISTANCE_MAX`, plus strict que la tolérance dlib par défaut de 0,60) + seuil de score **0,50** (`SEUIL_CONCORDANCE`) basculant en statut « À vérifier » sous ce niveau (RG-04) ; pointages douteux **exclus de l'agrégation** jusqu'à régularisation (RG-14) ; contrôle humain à l'approbation des feuilles de temps | Modéré | Mitigé |
-| R-07 | Technique | Double comptage des heures lors d'une réexécution de l'agrégation | 1 | 3 | 3 | **Idempotence** : marquage `Traité` + clé de rapprochement `No. Feuille Temps` (RG-13, BNF-11) ; `UpsertTSDetail` remplace au lieu d'additionner | Faible | Mitigé |
-| R-08 | Dépendances | Objets feuilles de temps standard BC 26.2 (tables 950/951/952) au schéma incertain → échec de compilation | 3 | 2 | 6 | **Symboles BC 26.2 téléchargés** (AL: Download Symbols) ; noms de champs et enums (`Time Sheet Status`, `Time Sheet Line Type`) validés champ par champ ; `ODataKeyFields` corrigé en `SystemId` ; **compilation 0 erreur et déploiement BC260 confirmés**. Cause supprimée. | Faible | **Clos** |
-| R-09 | Dépendances | Mapping collaborateur ↔ ressource BC incomplet → pointages non agrégeables | 2 | 2 | 4 | Mapping obligatoire avant génération (RG-11) ; champ `Code Ressource` `NotBlank` dans la table source ; configuration Owner/Approver automatisée par le codeunit 50121 ; contrôle de complétude en amont de la démo | Faible | Mitigé |
-| R-10 | Dépendances | Continuity Camera (iPhone) capte l'index webcam 0 → mauvaise caméra | 2 | 1 | 2 | `CAMERA_INDEX` configurable (fixé à 1 par défaut) ; vérification au lancement | Faible | Mitigé |
-| R-11 | Disponibilité | Perte intermittente du flux webcam en capture continue (macOS) | 2 | 2 | 4 | Réduction du buffer (`CAP_PROP_BUFFERSIZE=1`) + **reconnexion automatique** (5 tentatives × 1 s) implémentée dans `recognize.py` au lieu d'un arrêt sur perte de flux. Correctif appliqué et testé. | Faible | **Clos** |
-| R-12 | Projet / Délai | Délai serré (rendu 26.06.2026) → livrable incomplet | 3 | 3 | 9 | **Règle des planchers** : aucun critère grille laissé vide (−10 pts) ; priorisation des blocs ⭐ ; batch des tâches autonomes (Claude Code) ; périmètre démo réduit (3 enrôlés, 1 poste). Cœur technique sécurisé au 23.06 ; reste BI + tests + assemblage. | Modéré | Ouvert |
-| R-13 | Sécurité | Lien « Publish to web » Power BI = **public sans authentification** | 3 | 2 | 6 | Dashboard **pseudonymisé** (codes ressource ALAIN/ANNETTE/CHRISTIAN, pas de noms civils) ; aucune donnée biométrique ni nominative sensible ; lien non indexé, révocable à tout moment | Modéré | Ouvert |
-
-### 2.3 Synthèse — matrice de criticité (criticité initiale)
+### 2.3 Synthèse — matrice de criticité (évaluation initiale)
 
 | Impact ↓ / Proba → | 1 (Faible) | 2 (Moyen) | 3 (Élevé) |
 |---|---|---|---|
 | **3 (Élevé)** | R-01, R-03, R-04, R-07 | R-02, R-08, R-13 | **R-12** |
-| **2 (Moyen)** | — | R-05, R-06, R-09, R-11 | — |
+| **2 (Moyen)** | — | R-05, R-06, R-09, R-11, R-14 | — |
 | **1 (Faible)** | — | R-10 | — |
 
-**Évolution au 23.06** : deux risques techniques majeurs ont été **clos** en cours de projet — R-08 (schéma feuilles de temps confirmé, extension compilée et déployée) et R-11 (perte de flux webcam, reconnexion auto implémentée). Les risques restants les plus sensibles sont **R-12 (délai)**, traité par la priorisation grille, et le couple **R-02 / R-13** (conformité, exposition publique), tous deux dotés de mesures concrètes ramenant le risque résiduel à faible ou modéré.
+À l'identification, les risques les plus critiques étaient **R-12 (délai)**, traité par la priorisation grille, et le trio **R-02 / R-08 / R-13** (conformité, dépendances techniques, exposition publique). Au 23 juin, **R-08 et R-11 sont clos** (extension compilée et déployée, correctif webcam appliqué) ; **R-12 est en voie de maîtrise** (cœur technique terminé, aval en cours). Tous les risques restants disposent de mesures concrètes ramenant le risque résiduel à modéré ou faible.
 
 ### 2.4 Focus conformité — argument central du projet
 
@@ -74,7 +73,21 @@ Le traitement de données biométriques relève des **données sensibles** au se
 - **Découplage biométrique / métier** : BC ne manipule que des données métier (ressource, heures, score), agrégées en feuilles de temps. Le rapprochement vers le pointage source reste auditable (BNF-12) sans exposer de biométrie.
 - **Contrôle humain** : l'approbation des feuilles de temps constitue un point de validation conforme au principe de supervision humaine d'un traitement automatisé.
 
-> **Retour d'expérience sécurité (incident projet).** En cours de développement, des fichiers de pointage nominatifs (`queue/*.json`) ont été poussés par erreur sur le dépôt public. L'historique Git a été aplati (branche orpheline) pour purger ces données, et le `.gitignore` durci pour bloquer durablement les artefacts biométriques et les pointages nominatifs. Cet incident illustre concrètement le risque R-01 et valide l'utilité des mesures de minimisation : aucune donnée biométrique n'était exposée (seuls des logs métier l'étaient), confirmant le bénéfice du découplage.
+### Retour d'expérience sécurité (incident projet)
+
+En cours de développement, des fichiers de logs nominatifs (`queue/*.json`)
+contenant des identifiants collaborateurs ont été poussés par inadvertance
+sur le dépôt public. L'incident a été traité par : (1) purge de l'historique
+Git concerné, (2) durcissement du `.gitignore` (exclusion des artefacts
+biométriques `.pkl`/`.npy`, des logs `queue/*.json` et de la configuration
+locale), (3) mise en place d'un contrôle d'hygiène systématique avant chaque
+push (`git diff --name-only` + recherche de chaînes sensibles), validé
+manuellement.
+
+Cet épisode illustre concrètement le risque R-01 (exposition de données
+personnelles via le dépôt) et la mesure corrective associée. Il confirme la
+pertinence du principe de minimisation : aucune donnée biométrique ne quitte
+le poste, et seules les données strictement nécessaires transitent vers BC.
 
 ---
 
@@ -96,7 +109,7 @@ Le traitement de données biométriques relève des **données sensibles** au se
 
 | Poste | Cadre académique | Scénario entreprise | Commentaire |
 |---|---|---|---|
-| Matériel poste de pointage | 0 (MacBook existant) | 0–600 CHF | Webcam intégrée ; éventuel poste dédié |
+| Matériel poste de pointage | 0 (MacBook existant) | 600 CHF | Webcam intégrée ; éventuel poste dédié |
 | Développement (≈ 15 j-h) | 0 (formation) | 12 000 CHF | Python + extension AL + dashboard |
 | Configuration BC (ressources, feuilles de temps, souche) | 0 | 1 500 CHF | ≈ 2 j-h administrateur |
 | Mise en place VM + Power BI | 0 (crédit Education) | 800 CHF | ≈ 1 j-h |
@@ -131,7 +144,7 @@ Le traitement de données biométriques relève des **données sensibles** au se
 |---|---|---|
 | Temps administratif de consolidation des présences évité | 2 h/semaine × 46 sem. × 90 CHF/h | ≈ 8 280 CHF |
 | Réduction des erreurs/oublis de pointage (heures mal comptées) | 0,5 % de la masse horaire fiabilisée | ≈ 2 000 CHF |
-| Meilleure allocation (dashboard présence/charge) | Qualitatif → ≈ 1 % de productivité | non chiffré (prudence) |
+| Meilleure allocation (dashboard présence/charge) | Qualitatif → ≈ 1 % de productivité | non chiffré |
 | **Gain annuel total (prudent)** | | **≈ 10 280 CHF/an** |
 
 ### 4.2 Calcul du ROI
@@ -148,7 +161,7 @@ Le traitement de données biométriques relève des **données sensibles** au se
 
 ### 5.1 BC-1 — Automatiser le relevé de présence
 
-**Situation actuelle.** Le suivi des heures repose sur un pointage manuel (feuille de présence), générant oublis, erreurs de saisie et un temps de consolidation récurrent pour le responsable. Les heures réelles sont peu fiables et difficilement exploitables.
+**Situation actuelle.** Le suivi des heures repose sur un pointage manuel / une feuille de présence, générant oublis, erreurs de saisie et un temps de consolidation récurrent pour le responsable. Les heures réelles sont peu fiables et difficilement exploitables.
 
 **Solution proposée.** Reconnaissance faciale locale → alimentation automatique des feuilles de temps BC, sans saisie manuelle, avec workflow d'approbation natif.
 
@@ -159,7 +172,7 @@ Le traitement de données biométriques relève des **données sensibles** au se
 
 **Coûts.** CAPEX ≈ 14 900 CHF ; OPEX ≈ 2 640 CHF/an. **Payback ≈ 1,95 an.**
 
-**Risques clés & réponses.** Reconnaissance erronée → seuils 0,55 / 0,50 + statut « À vérifier » + contrôle humain (R-06) ; conformité → minimisation + consentement (R-01, R-02).
+**Risques clés & réponses.** Reconnaissance erronée → seuil + statut « À vérifier » + contrôle humain (R-06) ; conformité → minimisation + consentement (R-01, R-02) ; prérequis de configuration → contrôle avant mise en service (R-14).
 
 **Recommandation.** **Go.** Cœur de la valeur du projet, ROI positif, risques maîtrisés.
 
@@ -174,7 +187,7 @@ Le traitement de données biométriques relève des **données sensibles** au se
 - Détection des événements critiques (absences, retards, pointages douteux) comme KPI de gouvernance.
 - Aide à la décision de planification → meilleure allocation des ressources (gain qualitatif, ≈ 1 % de productivité).
 
-**Coûts.** Marginaux : ≈ 160 CHF/an (1 licence Pro) + VM optimisable. S'appuie sur l'API/OData et les données déjà produites par BC-1.
+**Coûts.** Marginaux : ≈ 160 CHF/an (1 licence Pro) + VM optimisable. S'appuie sur l'OData et les données déjà produites par BC-1.
 
 **Risques clés & réponses.** Exposition publique du lien → pseudonymisation, aucune donnée sensible (R-13) ; dépendance à la qualité des prévisions saisies (R-09).
 
@@ -186,7 +199,7 @@ Le traitement de données biométriques relève des **données sensibles** au se
 
 | Dimension | Verdict |
 |---|---|
-| Risques | 13 risques identifiés, tous dotés de mesures ; **2 clos en cours de projet** (R-08, R-11) ; résiduels faibles à modérés ; conformité nLPD/RGPD traitée par conception, validée par un incident réel maîtrisé |
+| Risques | 14 risques identifiés, tous dotés de mesures ; **R-08 et R-11 clos au 23.06** ; résiduels faibles à modérés ; conformité nLPD/RGPD traitée par conception |
 | Coûts | TCO 3 ans ≈ 22 820 CHF (entreprise) / ≈ 0 (académique) |
 | ROI | Payback < 2 ans, ROI ≈ +54 % à 3 ans |
 | Business cases | BC-1 (automatisation) : Go ; BC-2 (pilotage) : Go conditionnel |

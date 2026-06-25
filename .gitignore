@@ -36,6 +36,9 @@ secrets.*
 *.pem
 *.key
 
+# --- Claude Code (permissions de session — ne pas committer) ----------
+.claude/settings.json
+
 # --- Tampon local / logs ---------------------------------------------
 buffer/
 **/buffer/
