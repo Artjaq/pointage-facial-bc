@@ -5,9 +5,8 @@ page 50115 "PRF Previsions Charge List"
     UsageCategory = Lists;
     Caption = 'Prévisions de Charge';
     SourceTable = "PRF Prevision Charge";
-    Editable = false;
-    InsertAllowed = false;
-    ModifyAllowed = false;
+    InsertAllowed = true;
+    ModifyAllowed = true;
     DeleteAllowed = false;
 
     layout

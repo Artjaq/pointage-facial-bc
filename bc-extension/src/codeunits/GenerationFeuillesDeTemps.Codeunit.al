@@ -27,7 +27,8 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
         ResultMsg := StrSubstNo(
             'Traitement terminé.\Pointages traités : %1\Feuilles créées/mises à jour : %2\Avertissements : %3',
             NbPointagesTraites, NbFeuillesModifiees, NbAvertissements);
-        Message(ResultMsg);
+        if CurrentClientType() in [ClientType::Web, ClientType::Windows, ClientType::Tablet, ClientType::Phone] then
+            Message(ResultMsg);
     end;
 
     // Parcourt tous les pointages Validé + non Traité, groupés par ressource et par jour.
@@ -302,12 +303,10 @@ codeunit 50120 "PRF Gen. Feuilles de Temps"
         exit((DateDiffJours * 86400000 + TimeDiffMs) / 3600000);
     end;
 
-    // Journalise un avertissement non-bloquant.
-    // TODO : remplacer par Error Log (Table 1400 "Error Log") ou Activity Log si disponible.
+    // Journalise un avertissement non-bloquant via la télémétrie BC (visible dans Event Log).
     local procedure LogWarning(Msg: Text)
     begin
-        // Pour l'instant, les avertissements sont comptés et affichés dans le message final.
-        // Activation possible d'un journal BC via Error Message ou Activity Log.
-        Message(Msg); // Remplacer par une vraie journalisation en production
+        Session.LogMessage('PRF0001', Msg, Verbosity::Warning, DataClassification::SystemMetadata,
+            TelemetryScope::ExtensionPublisher, 'Category', 'PRF Pointage');
     end;
 }

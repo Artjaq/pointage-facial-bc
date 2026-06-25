@@ -9,6 +9,7 @@ codeunit 50121 "PRF Demo Setup"
     begin
         CreatePRFNoSeries();
         SetupResourceTimeSheets();
+        CreateJobQueueEntry();
     end;
 
     local procedure CreatePRFNoSeries()
@@ -34,6 +35,33 @@ codeunit 50121 "PRF Demo Setup"
             NoSeriesLine."Ending No." := 'PTG-99999';
             NoSeriesLine.Insert(false);
         end;
+    end;
+
+    local procedure CreateJobQueueEntry()
+    var
+        JobQueueEntry: Record "Job Queue Entry";
+    begin
+        // Idempotent : ne crée pas si une entrée pour CU 50120 existe déjà
+        JobQueueEntry.SetRange("Object Type to Run", JobQueueEntry."Object Type to Run"::Codeunit);
+        JobQueueEntry.SetRange("Object ID to Run", 50120);
+        if not JobQueueEntry.IsEmpty() then
+            exit;
+
+        JobQueueEntry.Init();
+        JobQueueEntry.Validate("Object Type to Run", JobQueueEntry."Object Type to Run"::Codeunit);
+        JobQueueEntry.Validate("Object ID to Run", 50120);
+        JobQueueEntry.Description := 'PRF - Generation feuilles de temps';
+        JobQueueEntry."Recurring Job" := true;
+        JobQueueEntry."No. of Minutes between Runs" := 1;
+        JobQueueEntry."Run on Mondays" := true;
+        JobQueueEntry."Run on Tuesdays" := true;
+        JobQueueEntry."Run on Wednesdays" := true;
+        JobQueueEntry."Run on Thursdays" := true;
+        JobQueueEntry."Run on Fridays" := true;
+        JobQueueEntry."Run on Saturdays" := false;
+        JobQueueEntry."Run on Sundays" := false;
+        JobQueueEntry.Insert(true);
+        JobQueueEntry.SetStatus(JobQueueEntry.Status::Ready);
     end;
 
     local procedure SetupResourceTimeSheets()
