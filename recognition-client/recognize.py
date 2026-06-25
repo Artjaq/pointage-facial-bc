@@ -4,6 +4,7 @@ Usage : python recognize.py
 Touche Q pour quitter.
 """
 
+import argparse
 import json
 import pickle
 import sys
@@ -31,6 +32,31 @@ from config import (
 # ── Reconnexion webcam ────────────────────────────────────────────────────────
 _MAX_RECONNECT    = 5    # tentatives avant abandon
 _RECONNECT_DELAY  = 1.0  # secondes entre chaque tentative
+_CONFIRMATION_DUREE = 3.5   # secondes — mode --once
+
+
+def _afficher_confirmation(cap: "cv2.VideoCapture", id_collab: str, type_p: str) -> None:
+    """Mode --once : bandeau coloré selon le type pendant _CONFIRMATION_DUREE secondes."""
+    couleur = (0, 180, 0) if type_p == "ENTREE" else (0, 140, 255)  # BGR: vert / orange
+    texte   = "ENTREE VALIDEE" if type_p == "ENTREE" else "SORTIE VALIDEE"
+    debut = time.time()
+    while time.time() - debut < _CONFIRMATION_DUREE:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        h, w = frame.shape[:2]
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (0, 0), (w, h), couleur, -1)
+        cv2.addWeighted(overlay, 0.55, frame, 0.45, 0, frame)
+        for i, (txt, scale, epaisseur) in enumerate([
+            (texte,     1.5, 3),   # grand texte centré
+            (id_collab, 1.0, 2),   # nom en dessous, plus petit
+        ]):
+            (tw, _), _ = cv2.getTextSize(txt, cv2.FONT_HERSHEY_SIMPLEX, scale, epaisseur)
+            cv2.putText(frame, txt, ((w - tw) // 2, h // 2 - 30 + i * 65),
+                        cv2.FONT_HERSHEY_SIMPLEX, scale, (255, 255, 255), epaisseur)
+        cv2.imshow("Pointage Facial", frame)
+        cv2.waitKey(1)
 
 
 def _reconnect_webcam() -> "cv2.VideoCapture | None":
@@ -129,6 +155,17 @@ def ecrire_log(id_collab: str, score: float, type_p: str, statut: str) -> None:
 # ── Boucle principale ─────────────────────────────────────────────────────────
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Reconnaissance faciale — pointage")
+    parser.add_argument("--once", action="store_true",
+                        help="Quitte après le premier pointage validé (mode démo).")
+    parser.add_argument("--type", dest="type_pointage",
+                        choices=["entree", "sortie"],
+                        help="Forcer le type ENTREE ou SORTIE (démo). "
+                             "Par défaut : déduit depuis l'historique du jour.")
+    args = parser.parse_args()
+    mode_once  = args.once
+    type_force = args.type_pointage.upper() if args.type_pointage else None
+
     knn = charger_knn()
 
     cap = cv2.VideoCapture(CAMERA_INDEX)
@@ -143,8 +180,13 @@ def main() -> None:
     # {id_collab: datetime du dernier pointage} — anti-rebond en mémoire
     derniers_pointages: dict[str, datetime] = {}
 
-    print("[INFO] Reconnaissance active. Appuyez sur Q pour quitter.\n")
+    if mode_once:
+        print("[INFO] Reconnaissance active — mode UNIQUE (--once)."
+              + (f" Type forcé : {type_force}." if type_force else "") + "\n")
+    else:
+        print("[INFO] Reconnaissance active. Appuyez sur Q pour quitter.\n")
 
+    pointage_fait = False
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -169,6 +211,7 @@ def main() -> None:
 
         now = datetime.now()
 
+        msg_score_faible = None
         for (top, right, bottom, left), enc in zip(locations, encodings):
             enc_2d = np.array(enc).reshape(1, -1)
 
@@ -204,9 +247,23 @@ def main() -> None:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, couleur, 2)
 
             if not en_cooldown:
-                type_p = deduire_type_pointage(id_collab)
-                ecrire_log(id_collab, score, type_p, statut)
-                derniers_pointages[id_collab] = now
+                if mode_once and statut != "OK":
+                    msg_score_faible = f"Score faible ({score:.0%}) — rapprochez-vous"
+                else:
+                    type_p = type_force or deduire_type_pointage(id_collab)
+                    ecrire_log(id_collab, score, type_p, statut)
+                    derniers_pointages[id_collab] = now
+                    if mode_once:
+                        _afficher_confirmation(cap, id_collab, type_p)
+                        pointage_fait = True
+                        break   # sort du for (visages)
+
+        if pointage_fait:
+            break           # sort du while True
+
+        if msg_score_faible:
+            cv2.putText(frame, msg_score_faible, (10, frame.shape[0] - 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 140, 255), 2)
 
         cv2.imshow("Pointage Facial", frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):

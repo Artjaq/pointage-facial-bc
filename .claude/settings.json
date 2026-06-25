@@ -1,10 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cp docs/analyse-risques-couts-business-cases.md docs/planification-ecarts.md /tmp/ && ls /tmp/analyse-risques* /tmp/planification*)"
+      "Bash(cp docs/analyse-risques-couts-business-cases.md docs/planification-ecarts.md /tmp/ && ls /tmp/analyse-risques* /tmp/planification*)",
+      "Bash(/Users/admin/Dev/ES/PI2/pointage-facial/.venv/bin/python -c ' *)",
+      "Bash(rm /Users/admin/Dev/ES/PI2/pointage-facial/recognition-client/enrol_data/images/ARTHUR/ARTHUR_*.jpg && echo \"Images supprimées\" && rm /Users/admin/Dev/ES/PI2/pointage-facial/recognition-client/enrol_data/encodings.pkl && echo \"encodings.pkl supprimé\" && rm /Users/admin/Dev/ES/PI2/pointage-facial/recognition-client/enrol_data/knn_classifier.pkl && echo \"knn_classifier.pkl supprimé\")"
     ],
     "additionalDirectories": [
-      "/Users/admin/Dev/ES/PI2/pointage-facial/docs"
+      "/Users/admin/Dev/ES/PI2/pointage-facial/docs",
+      "/Users/admin/Dev/ES/PI2/pointage-facial/recognition-client/enrol_data/images/ARTHUR"
     ]
   }
 }
