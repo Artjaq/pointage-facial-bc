@@ -104,8 +104,8 @@ def deduire_type_pointage(id_collab: str) -> str:
 def ecrire_log(id_collab: str, score: float, type_p: str, statut: str) -> None:
     """Persiste un pointage en JSON dans queue/."""
     QUEUE_DIR.mkdir(parents=True, exist_ok=True)
-    now = datetime.now()
-    now_iso = now.isoformat(timespec="seconds")
+    now = datetime.now().astimezone()           # timezone-aware (offset local : +01:00 / +02:00)
+    now_iso = now.isoformat(timespec="seconds") # → "2026-06-25T14:30:00+02:00"
 
     # Nom de fichier horodaté + UUID court pour l'idempotence côté sync
     nom = QUEUE_DIR / f"{now_iso.replace(':', '-')}_{id_collab}_{uuid.uuid4().hex[:8]}.json"

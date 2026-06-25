@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2026-06-25
+- Correction format datetime OData : recognize.py utilise datetime.now().astimezone() (offset local +01:00/+02:00) ; sync_bc.py ajoute helper _format_datetime_bc() en défense pour les logs naïfs déjà en queue/ — BC exige Edm.DateTimeOffset, rejetait silencieusement les datetime sans timezone en 400 BadRequest (fichiers : recognition-client/recognize.py, recognition-client/sync_bc.py).
 - Contrainte d'unicité sur identité naturelle pointage : clé K1 étendue à ("Code Ressource", "Date-Heure", "Type") avec Unique = true — garantit l'idempotence des POST OData ; 0 doublon vérifié sur les 3 sociétés avant déploiement ; version 1.0.0.4→1.0.0.5 (fichiers : bc-extension/src/tables/PointageReconnaissance.Table.al, bc-extension/app.json).
 - Dashboard Power BI finalisé : 3 visuels (V1 histogramme temporel, V2 cartes KPI, V3 matrice), 7 mesures DAX, 2 segments interactifs (collaborateur + période) ; publication Publish to web bloquée par tenant établissement — plan B documenté (fichiers : docs/suivi-dashboard-finalisation.md).
 

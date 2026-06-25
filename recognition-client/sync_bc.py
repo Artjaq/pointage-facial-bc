@@ -7,6 +7,7 @@ Usage : python sync_bc.py
 import json
 import logging
 import shutil
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -21,6 +22,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _format_datetime_bc(dt_str: str) -> str:
+    """Garantit un Edm.DateTimeOffset valide pour BC OData.
+    Les logs écrits avant le fix de recognize.py sont naïfs (pas de timezone) :
+    on leur attache la timezone locale à l'envoi."""
+    if dt_str.endswith("Z"):
+        return dt_str                      # déjà UTC explicite — BC accepte
+    try:
+        dt = datetime.fromisoformat(dt_str)
+    except ValueError:
+        return dt_str                      # format inconnu — passer tel quel, BC renverra 400
+    if dt.tzinfo is None:
+        dt = dt.astimezone()               # heure locale naïve → ajoute l'offset local
+    return dt.isoformat(timespec="seconds")
+
+
 # ── Mapping vers le schéma BC ─────────────────────────────────────────────────
 
 def construire_payload(log: dict) -> dict:
@@ -30,7 +48,7 @@ def construire_payload(log: dict) -> dict:
     """
     return {
         "CodeCollaborateur": log["id"],           # Clé naturelle collaborateur
-        "DateHeure":         log["datetime"],      # ISO 8601 (ex. 2025-06-05T08:31:00)
+        "DateHeure":         _format_datetime_bc(log["datetime"]),
         "Type":              log["type"],           # "ENTREE" ou "SORTIE"
         "ScoreConcordance":  log["score"],          # Décimal 0-1 (4 décimales)
         "SourcePoste":       log["source_poste"],   # Identifiant du terminal
