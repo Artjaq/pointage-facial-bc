@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-06-25
+- Dashboard Power BI finalisé : 3 visuels (V1 histogramme temporel, V2 cartes KPI, V3 matrice), 7 mesures DAX, 2 segments interactifs (collaborateur + période) ; publication Publish to web bloquée par tenant établissement — plan B documenté (fichiers : docs/suivi-dashboard-finalisation.md).
+
 ## 2026-06-24
 - Correction $metadata API heuresJournalieres rejeté par Power BI : champ resourceNo était une variable de page (Edm.String sans MaxLength), remplacé par FlowField "PRF Resource No." via TableExtension 50100 sur "Time Sheet Detail" (CalcFormula lookup vers "Time Sheet Header"."Resource No.") ; metadata corrigé (MaxLength="20" présent) ; v1.0.0.3→1.0.0.4 (fichiers : bc-extension/src/tables/TimeSheetDetailExt.TableExt.al, bc-extension/src/pages/HeuresJournalieresAPI.Page.al, bc-extension/app.json).
 
