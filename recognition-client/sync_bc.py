@@ -84,12 +84,25 @@ def envoyer_log(fichier: Path) -> bool:
         logger.info("Envoyé avec succès : %s", fichier.name)
         return True
 
-    # 409 Conflict : BC signale un doublon → on considère le log comme envoyé
-    # (idempotence : le log est déjà dans BC, pas besoin de le renvoyer)
-    if resp.status_code == 409:
+    # 400 Internal_EntityWithSameKeyExists : doublon rejeté par la contrainte unique K1
+    # (BC 26 renvoie 400, pas 409, sur violation d'index unique)
+    # 409 gardé pour compatibilité avec d'éventuelles versions BC antérieures
+    if resp.status_code in (400, 409):
+        if resp.status_code == 400:
+            try:
+                err_code = resp.json().get("error", {}).get("code", "")
+            except ValueError:
+                err_code = ""
+            if "entitywithsamekeyexists" not in err_code.lower():
+                # 400 générique (payload malformé, champ manquant…) — conserver pour investigation
+                logger.error(
+                    "Erreur de validation BC (400) pour %s : %s",
+                    fichier.name, resp.text[:300],
+                )
+                return False
         logger.warning(
-            "Doublon détecté côté BC (409) pour %s — marqué comme envoyé.",
-            fichier.name,
+            "Doublon détecté côté BC (%s) pour %s — marqué comme envoyé.",
+            resp.status_code, fichier.name,
         )
         return True
 

@@ -92,7 +92,7 @@ table 50100 "PRF Pointage Reconnaissance"
         {
             Clustered = true;
         }
-        key(K1; "Code Ressource", "Date-Heure") { }
+        key(K1; "Code Ressource", "Date-Heure", "Type") { Unique = true; }
         key(K2; "Statut", "Traite") { }
     }
 
