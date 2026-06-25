@@ -1,3 +1,5 @@
+# Copier ce fichier en config.py et renseigner les valeurs ODATA_*.
+# config.py est ignoré par git.
 """
 Constantes globales du module de pointage facial.
 Modifier uniquement cette section pour adapter le déploiement.
