@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+    <key>Label</key>
+    <string>com.prf.pointage.sync</string>
+
+    <!-- ================================================================
+         PLACEHOLDERS — remplacer AVANT d'installer avec install-launchd.sh
+         [VENV_PYTHON]  : chemin absolu vers le python du venv
+                          ex. /Users/monnom/Dev/pointage-facial/recognition-client/.venv/bin/python
+         [REPO_PATH]    : chemin absolu vers la racine du repo
+                          ex. /Users/monnom/Dev/pointage-facial
+         ================================================================ -->
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>[VENV_PYTHON]</string>
+        <string>[REPO_PATH]/recognition-client/sync_bc.py</string>
+    </array>
+
+    <!-- Répertoire de travail = dossier du script (pour que config.py soit trouvé) -->
+    <key>WorkingDirectory</key>
+    <string>[REPO_PATH]/recognition-client</string>
+
+    <!-- Lancer immédiatement au chargement du Launch Agent -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Intervalle de répétition : 300 secondes = 5 minutes -->
+    <key>StartInterval</key>
+    <integer>300</integer>
+
+    <!-- Redirection des sorties -->
+    <key>StandardOutPath</key>
+    <string>[REPO_PATH]/recognition-client/automation/logs/sync.out</string>
+
+    <key>StandardErrorPath</key>
+    <string>[REPO_PATH]/recognition-client/automation/logs/sync.err</string>
+
+    <!-- Variables d'environnement héritées du shell utilisateur -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+</dict>
+</plist>

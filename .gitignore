@@ -83,5 +83,12 @@ rad.json
 # File d'attente locale (pointages nominatifs — nLPD/RGPD)
 recognition-client/queue/*.json
 recognition-client/queue/sent/*.json
+
+# Logs du Launch Agent (générés à l'exécution — ne pas committer)
+recognition-client/automation/logs/*.out
+recognition-client/automation/logs/*.err
+recognition-client/automation/logs/*.log
+# Mais conserver le dossier vide tracké
+!recognition-client/automation/logs/.gitkeep
 ./bc-extension/launch.json
 bc-extension/src/launch.json
